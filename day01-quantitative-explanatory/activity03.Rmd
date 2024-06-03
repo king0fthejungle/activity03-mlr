@@ -31,7 +31,8 @@ Remember that [Emil Hvitfeldt](https://www.emilhvitfeldt.com/) (of Posit) has pu
 - Run the `load-packages` code chunk or **knit** <img src="../README-img/knit-icon.png" alt="knit" width = "20"/> icon your Rmd document to verify that no errors occur.
 
 ```{r load-packages}
-
+library(tidyverse)
+library(tidymodels)
 ```
 
 Since we will be looking at many relationships graphically, it will be nice to not have to code each of these individually.
@@ -63,11 +64,21 @@ Create a new R code chunk below that is titled `load-data` and reads in the abov
 - Filter the data `hfi` data frame for year 2016 and assigns the result to an R data object named `hfi_2016`. You will use `hfi_2016` for the remainder of this activity.
 
 We will continue using personal freedom scores, `pf_score`, as the response variable and build on our model that had `pf_expression_control` as the explanatory variable. 
+```{r load-data}
+# hfi <- read_tsv("https://www.openintro.org/data/tab-delimited/hfi.txt", progress = TRUE) breaks on posit workbench due to some timeout/firewall
+hfi_2016 <- read_csv("../hfi.csv") |>
+  filter(year == 2016)
+```
 
 Create a new R code chunk below, with an appropriate title, that does the following:
 
 - Review the about page of the data set and select at least one additional numeric variables (hint: look for `<dbl>` or `<int>` designations) to describe its distribution. Remember to write your description.
 - You may also wish to do this for `pf_score` and `pf_expression_control` again to help you remember what you noticed last week.
+
+```{r}
+summary(hfi_2016[, c("pf_score", "pf_expression_control", "pf_movement_foreign", "pf_rol_criminal", "pf_rol")])
+```
+
 
 ## Pairwise relationships
 
@@ -99,9 +110,12 @@ Now, we will obtain graphical and numerical summaries to describe the pairwise r
 - Replace `explanatory` in the `select` line with the variable you identified above
 - Run your code chunk or knit your document.
   
-```{verbatim pairs-plot}
+```{r pairs-plot}
+library(ggplot2)
+library(GGally)
+
 hfi_2016 %>% 
-  select(pf_score, pf_expression_control, explanatory) %>% 
+  select(pf_score, pf_expression_control, pf_rol) %>% 
   ggpairs()
 ```
 
@@ -136,7 +150,7 @@ $$
 - Replace `explanatory`, similarly to what you did in your `pairs-plot` R code chunk.
 - Run your code chunk or knit your document.
   
-```{verbatim mlr-model}
+```{r mlr-model}
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
@@ -145,7 +159,7 @@ lm_spec <- linear_reg() %>%
 lm_spec
 
 mlr_mod <- lm_spec %>% 
-fit(pf_score ~ pf_expression_control + explanatory, data = hfi_2016)
+fit(pf_score ~ pf_expression_control + pf_rol, data = hfi_2016)
 
 # model output
 tidy(mlr_mod)
@@ -162,9 +176,13 @@ $$
   
   where $b_0$ and $b_1$ were your model parameter estimates.
   Note that your model here will be different (and have more terms).
-
+$$
+\hat{y} = 3.44 + 0.37 \times x_1 + 0.33 \times x_2
+$$
 5. For each of the estimated parameters (the *y*-intercept and the slopes associated with each explanatory variable - three total), interpret these values in the context of this problem.
   That is, what do they mean for a "non-data" person?
+  
+When pf_expression_control is held constant, as pf_rol increases by 1 we expect pf_score to increase by 0.33.
 
 ## Challenge: 3-D plots
 
@@ -173,6 +191,13 @@ Do some internet sleuthing to minimally produce a 3-D scatterplot (you do not ne
 Ideally, this would be something that plays nicely with (looks similar to) `{ggplot2}`.
 
 - Create a new R code chunk, with a descriptive name, and add your code to create this plot.
+
+```{r 3d scatter}
+library(rgl)
+
+plot3d(hfi_2016$pf_rol, hfi_2016$pf_expression_control, hfi_2016$pf_score, col = "blue", size = 3)
+```
+
 
 After doing this, respond to the following prompt:
 
